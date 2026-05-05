@@ -6,8 +6,8 @@ app.use(express.json());
 
 // Miljøvariabler fra Railway
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_URL = https://bneoucvqzxmtlksvgyqj.supabase.co
+  process.env.SUPABASE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuZW91Y3ZxenhtdGxrc3ZneXFqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzk3MjkzMywiZXhwIjoyMDkzNTQ4OTMzfQ.ZUIs4lNQXZdbjd4IqiGeBCZkXC8agfvDb-rzbjHGuhA
 );
 
 app.post("/validate", async (req, res) => {
