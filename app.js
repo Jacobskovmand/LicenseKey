@@ -4,7 +4,7 @@ const app = express();
 
 app.use(express.json());
 
-const FILE = "activations.txt";
+const FILE = "Licenses.txt";
 
 // Sørg for at filen findes
 if (!fs.existsSync(FILE)) {
