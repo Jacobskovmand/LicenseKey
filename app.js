@@ -1,57 +1,48 @@
 const express = require("express");
-const fs = require("fs");
-const app = express();
+const { createClient } = require("@supabase/supabase-js");
 
+const app = express();
 app.use(express.json());
 
-const FILE = "licenses.txt";
+// Miljøvariabler fra Railway
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
-// Sørg for at filen findes
-if (!fs.existsSync(FILE)) {
-  fs.writeFileSync(FILE, "");
-}
-
-// Læs alle aktiveringer fra tekstfilen
-function readActivations() {
-  const data = fs.readFileSync(FILE, "utf8").trim();
-  if (!data) return [];
-  return data.split("\n").map(line => {
-    const [license, machine] = line.split(";");
-    return { license, machine };
-  });
-}
-
-// Tilføj ny aktivering
-function addActivation(license, machine) {
-  fs.appendFileSync(FILE, `${license};${machine}\n`);
-}
-
-app.post("/validate", (req, res) => {
+app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
   if (!license || !machine) {
     return res.json({ status: "error" });
   }
 
-  const activations = readActivations();
+  // Tjek om licens+maskine allerede findes
+  const { data: existing, error: selectError } = await supabase
+    .from("activations")
+    .select("*")
+    .eq("license", license)
+    .eq("machine", machine)
+    .maybeSingle();
 
-  // Find om licens+maskine allerede findes
-  const exists = activations.find(
-    (a) => a.license === license && a.machine === machine
-  );
-
-  if (exists) {
+  if (existing) {
     return res.json({ status: "valid" });
   }
 
-  // Hvis ikke → registrér ny aktivering
-  addActivation(license, machine);
+  // Ellers indsæt ny aktivering
+  const { error: insertError } = await supabase
+    .from("activations")
+    .insert([{ license, machine }]);
+
+  if (insertError) {
+    return res.json({ status: "error" });
+  }
 
   return res.json({ status: "registered" });
 });
 
 app.get("/", (req, res) => {
-  res.send("License API running with flat text file storage");
+  res.send("License API running with Supabase storage");
 });
 
 const PORT = process.env.PORT || 3000;
