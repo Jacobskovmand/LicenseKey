@@ -1,15 +1,3 @@
-const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
-
-const app = express();
-app.use(express.json());
-
-// Miljøvariabler fra Railway
-const supabase = createClient(
-  process.env.SUPABASE_URL, 
-  process.env.SUPABASE_KEY 
-);
-
 app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
@@ -17,19 +5,25 @@ app.post("/validate", async (req, res) => {
     return res.json({ status: "error" });
   }
 
-  // Tjek om licens+maskine allerede findes
+  // Find licensen uanset maskine
   const { data: existing, error: selectError } = await supabase
     .from("activations")
     .select("*")
     .eq("license", license)
-    .eq("machine", machine)
     .maybeSingle();
 
+  // Hvis licensen findes
   if (existing) {
-    return res.json({ status: "valid" });
+    // Hvis maskinen er den samme → valid
+    if (existing.machine === machine) {
+      return res.json({ status: "valid" });
+    }
+
+    // Hvis maskinen er forskellig → licensen er allerede brugt
+    return res.json({ status: "invalid_machine" });
   }
 
-  // Ellers indsæt ny aktivering
+  // Licensen findes ikke → registrér den
   const { error: insertError } = await supabase
     .from("activations")
     .insert([{ license, machine }]);
@@ -40,10 +34,3 @@ app.post("/validate", async (req, res) => {
 
   return res.json({ status: "registered" });
 });
-
-app.get("/", (req, res) => {
-  res.send("License API running with Supabase storage");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
