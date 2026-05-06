@@ -1,3 +1,15 @@
+const express = require("express");
+const { createClient } = require("@supabase/supabase-js");
+
+const app = express();
+app.use(express.json());
+
+// Miljøvariabler fra Railway
+const supabase = createClient(
+  process.env.SUPABASE_URL, 
+  process.env.SUPABASE_KEY 
+);
+
 app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
@@ -5,37 +17,48 @@ app.post("/validate", async (req, res) => {
     return res.json({ status: "error" });
   }
 
-  // 1. Find licensen i databasen
-  const { data: existing, error: selectError } = await supabase
+  // Find licensen
+  const { data, error } = await supabase
     .from("activations")
     .select("*")
     .eq("license", license)
-    .maybeSingle();
+    .limit(1);
 
-  // Hvis licensen ikke findes → fejl
+  if (error) {
+    console.log("Select error:", error);
+    return res.json({ status: "error" });
+  }
+
+  const existing = data[0];
+
   if (!existing) {
     return res.json({ status: "license_not_found" });
   }
 
-  // 2. Hvis licensen allerede er bundet til denne maskine → valid
   if (existing.machine === machine) {
     return res.json({ status: "valid" });
   }
 
-  // 3. Hvis licensen er bundet til en anden maskine → fejl
   if (existing.machine && existing.machine !== machine) {
     return res.json({ status: "invalid_machine" });
   }
 
-  // 4. Hvis licensen findes, men machineId er tom → opdater
   const { error: updateError } = await supabase
     .from("activations")
     .update({ machine })
     .eq("license", license);
 
   if (updateError) {
+    console.log("Update error:", updateError);
     return res.json({ status: "error" });
   }
 
   return res.json({ status: "registered" });
 });
+
+app.get("/", (req, res) => {
+  res.send("License API running with Supabase storage");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on port " + PORT));
