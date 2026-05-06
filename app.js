@@ -55,7 +55,5 @@ app.post("/validate", async (req, res) => {
   return res.json({ status: "invalid_machine" });
 });
 
-});
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
