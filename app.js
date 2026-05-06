@@ -4,10 +4,10 @@ const { createClient } = require("@supabase/supabase-js");
 const app = express();
 app.use(express.json());
 
-// Miljøvariabler fra Railway
+// Railway miljøvariabler
 const supabase = createClient(
-  process.env.SUPABASE_URL, 
-  process.env.SUPABASE_KEY 
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
 );
 
 app.post("/validate", async (req, res) => {
@@ -17,39 +17,63 @@ app.post("/validate", async (req, res) => {
     return res.json({ status: "error" });
   }
 
-  // Find licensen
-  const { data, error } = await supabase
-    .from("activations")
+  //
+  // 1. Hent licensen fra licenses-tabellen
+  //
+  const { data: licenseData, error: licenseError } = await supabase
+    .from("licenses")
     .select("*")
     .eq("license", license)
-    .limit(1);
+    .maybeSingle();
 
-  if (error) {
-    console.log("Select error:", error);
-    return res.json({ status: "error" });
-  }
-
-  const existing = data[0];
-
-  if (!existing) {
+  if (!licenseData) {
     return res.json({ status: "license_not_found" });
   }
 
-  if (existing.machine === machine) {
+  //
+  // 2. Tjek om licensen er disabled
+  //
+  if (licenseData.disabled === true) {
+    return res.json({ status: "disabled" });
+  }
+
+  //
+  // 3. Hent alle aktiveringer for denne licens
+  //
+  const { data: activations, error: actError } = await supabase
+    .from("activations")
+    .select("*")
+    .eq("license", license);
+
+  if (actError) {
+    return res.json({ status: "error" });
+  }
+
+  //
+  // 4. Hvis maskinen allerede findes → valid
+  //
+  const existing = activations.find(a => a.machine === machine);
+  if (existing) {
     return res.json({ status: "valid" });
   }
 
-  if (existing.machine && existing.machine !== machine) {
-    return res.json({ status: "invalid_machine" });
+  //
+  // 5. Hvis du vil bruge max_machines (valgfrit)
+  //
+  if (licenseData.max_machines) {
+    if (activations.length >= licenseData.max_machines) {
+      return res.json({ status: "invalid_machine" });
+    }
   }
 
-  const { error: updateError } = await supabase
+  //
+  // 6. Ellers registrér maskinen
+  //
+  const { error: insertError } = await supabase
     .from("activations")
-    .update({ machine })
-    .eq("license", license);
+    .insert([{ license, machine }]);
 
-  if (updateError) {
-    console.log("Update error:", updateError);
+  if (insertError) {
     return res.json({ status: "error" });
   }
 
