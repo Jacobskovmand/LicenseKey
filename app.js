@@ -1,5 +1,15 @@
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
+
+const app = express();
+app.use(express.json());
+
+// Railway miljøvariabler
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
 app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
