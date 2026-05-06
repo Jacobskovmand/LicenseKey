@@ -5,30 +5,35 @@ app.post("/validate", async (req, res) => {
     return res.json({ status: "error" });
   }
 
-  // Find licensen uanset maskine
+  // 1. Find licensen i databasen
   const { data: existing, error: selectError } = await supabase
     .from("activations")
     .select("*")
     .eq("license", license)
     .maybeSingle();
 
-  // Hvis licensen findes
-  if (existing) {
-    // Hvis maskinen er den samme → valid
-    if (existing.machine === machine) {
-      return res.json({ status: "valid" });
-    }
+  // Hvis licensen ikke findes → fejl
+  if (!existing) {
+    return res.json({ status: "license_not_found" });
+  }
 
-    // Hvis maskinen er forskellig → licensen er allerede brugt
+  // 2. Hvis licensen allerede er bundet til denne maskine → valid
+  if (existing.machine === machine) {
+    return res.json({ status: "valid" });
+  }
+
+  // 3. Hvis licensen er bundet til en anden maskine → fejl
+  if (existing.machine && existing.machine !== machine) {
     return res.json({ status: "invalid_machine" });
   }
 
-  // Licensen findes ikke → registrér den
-  const { error: insertError } = await supabase
+  // 4. Hvis licensen findes, men machineId er tom → opdater
+  const { error: updateError } = await supabase
     .from("activations")
-    .insert([{ license, machine }]);
+    .update({ machine })
+    .eq("license", license);
 
-  if (insertError) {
+  if (updateError) {
     return res.json({ status: "error" });
   }
 
