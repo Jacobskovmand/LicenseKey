@@ -14,7 +14,7 @@ app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
   if (!license || !machine) {
-    return res.json({ status: "error" });
+    return res.json("error");
   }
 
   // 1. Find licensen i activations-tabellen
@@ -26,19 +26,19 @@ app.post("/validate", async (req, res) => {
 
   if (error) {
     console.log("Select error:", error);
-    return res.json({ status: "error" });
+    return res.json("error");
   }
 
   const existing = data[0];
 
   // 2. Licensen findes ikke
   if (!existing) {
-    return res.json({ status: "license_not_found" });
+    return res.json("license_not_found");
   }
 
   // 3. Licensen er disabled
   if (existing.disabled === true) {
-    return res.json({ status: "disabled" });
+    return res.json("License disabled");
   }
 
   // 4. Licensen er ikke bundet til en maskine endnu
@@ -50,19 +50,19 @@ app.post("/validate", async (req, res) => {
 
     if (updateError) {
       console.log("Update error:", updateError);
-      return res.json({ status: "error" });
+      return res.json("error");
     }
 
-    return res.json({ status: "registered" });
+    return res.json("registered");
   }
 
   // 5. Maskinen matcher → valid
   if (existing.machine === machine) {
-    return res.json({ status: "valid" });
+    return res.json("valid");
   }
 
   // 6. Maskinen matcher ikke → invalid
-  return res.json({ status: "invalid_machine" });
+  return res.json("invalid_machine");
 });
 
 const PORT = process.env.PORT || 3000;
