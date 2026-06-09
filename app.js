@@ -3,7 +3,7 @@ console.log("SUPABASE_KEY:", process.env.SUPABASE_KEY ? "OK" : "MISSING");
 
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
-
+const today = new Date();
 const app = express();
 app.use(express.json());
 
@@ -46,9 +46,8 @@ app.post("/validate", async (req, res) => {
 
   // 4. Trial-licens udløbet?
   if (existing.Trial === true) {
-    const today = new Date();
+    
     const expiry = new Date(existing.ExpiryDate);
-
     if (today > expiry) {
       return res.json({ status: "trial_expired" });
     }
@@ -62,7 +61,7 @@ app.post("/validate", async (req, res) => {
       .select("*")
       .eq("license", license)
       .eq("machine", machine);
-
+      
     if (trialMachines.length > 0) {
       return res.json({ status: "valid" });
     }
@@ -70,7 +69,7 @@ app.post("/validate", async (req, res) => {
     // Ellers registrér maskinen
     const { error: insertError } = await supabase
       .from("activations")
-      .insert([{ license, machine }]);
+      .insert([{ license, machine, activationDate: today }]);
 
     if (insertError) {
       console.log("Insert error:", insertError);
@@ -84,7 +83,7 @@ app.post("/validate", async (req, res) => {
   if (!existing.machine || existing.machine === "") {
     const { error: updateError } = await supabase
       .from("activations")
-      .update({ machine })
+      .update({ machine, activationDate: today })
       .eq("license", license);
 
     if (updateError) {
