@@ -14,7 +14,7 @@ app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
   if (!license || !machine) {
-    return res.json({ "No license entered" });
+    return res.json({ status: "No license entered" });
   }
 
   // 1. Find licensen i LicenseTable-tabellen
@@ -33,12 +33,12 @@ app.post("/validate", async (req, res) => {
 
   // 2. Licensen findes ikke
   if (!existing) {
-    return res.json({ "license_not_found" });
+    return res.json({ status: "license_not_found" });
   }
 
   // 3. Licensen er disabled
   if (existing.disabled === true) {
-    return res.json({ "License disabled" });
+    return res.json({ status: "License disabled" });
   }
 
   // 4. Trial-licens udløbet?
@@ -46,7 +46,7 @@ app.post("/validate", async (req, res) => {
     
     const expiry = new Date(existing.ExpiryDate);
     if (today > expiry) {
-      return res.json({ "Trial expired" });
+      return res.json({ status: "Trial expired" });
     }
   }
 
@@ -97,7 +97,7 @@ app.post("/validate", async (req, res) => {
   }
 
   // 8. Maskinen matcher ikke → invalid
-  return res.json({ "invalid_machine" });
+  return res.json({ status: "invalid_machine" });
 });
 
 const PORT = process.env.PORT || 3000;
