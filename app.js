@@ -12,13 +12,20 @@ const supabase = createClient(
 
 // Hjælpefunktion
 async function logLicenseCheck(license, machine, status) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("LicenseChecked")
-    .insert([{
-      license,
-      machine,
-      status      
-    }]);
+    .insert([
+      {
+        License: license,
+        machine: machine,
+        status: status
+      }
+    ])
+    .select();
+
+  console.log("Data:", data);
+  console.log("Error:", error);
+}
 
   if (error) {
     console.error("LicenseChecked insert error:", error);
