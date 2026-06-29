@@ -33,7 +33,7 @@ app.post("/validate", async (req, res) => {
 
   // 2. Licensen findes ikke
   if (!existing) {
-    return res.json({ status: "license_not_found" });
+    return res.json({ status: "License not found" });
   }
 
   // 3. Licensen er disabled
@@ -85,16 +85,16 @@ app.post("/validate", async (req, res) => {
       return res.json({ status: "error_4" });
     }
 
-    return res.json({ status: "registered" });
+    return res.json({ status: "Registered" });
   }
 
   // 7. Maskinen matcher → valid
   if (existing.machine === machine) {
-    return res.json({ status: "valid" });
+    return res.json({ status: "Valid" });
   }
 
   // 8. Maskinen matcher ikke → invalid
-  return res.json({ status: "invalid_machine" });
+  return res.json({ status: "Invalid Machine" });
 });
 
 const PORT = process.env.PORT || 3000;
