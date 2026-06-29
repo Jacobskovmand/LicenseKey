@@ -17,8 +17,7 @@ async function logLicenseCheck(license, machine, status) {
     .insert([{
       license,
       machine,
-      status,
-      checkedAt: new Date()
+      status      
     }]);
 
   if (error) {
