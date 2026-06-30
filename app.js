@@ -78,7 +78,7 @@ app.post("/validate", async (req, res) => {
       .eq("machine", machine);
       
     if (trialMachines.length > 0) {
-      return res.json({ status: "valid" });
+      return res.json({ status: "Trial license" });
     }
 
     // Ellers registrér maskinen
