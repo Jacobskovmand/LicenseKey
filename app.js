@@ -29,10 +29,12 @@ async function logLicenseCheck(license, machine, status) {
 app.post("/validate", async (req, res) => {
   const { license, machine } = req.body;
 
+  /*
   // Kræver både licens og maskine
   if (!license || !machine) return res.json({ status: "No license entered" });
 
   // Slår licensen op i LicenseTable
+  
   const { data, error } = await supabase
     .from("LicenseTable")
     .select("*")
@@ -40,7 +42,7 @@ app.post("/validate", async (req, res) => {
     .limit(1);
 
   if (error) return res.json({ status: "error_2" });
-
+*/
   const existing = data[0];
 
   // Licensen findes ikke
